@@ -54,15 +54,24 @@ st.markdown("""
 def fetch_kline(symbol, interval, limit):
     url = "https://api.binance.com/api/v3/klines"
     params = {"symbol": symbol, "interval": interval, "limit": limit}
-    data = requests.get(url, params=params).json()
-    df = pd.DataFrame(data, columns=[
-        "open_time","open","high","low","close","volume",
-        "close_time","quote_asset_volume","num_trades","taker_buy_base",
-        "taker_buy_quote","ignore"
-    ])
-    df[["open","high","low","close","volume"]] = df[["open","high","low","close","volume"]].astype(float)
-    df["close_time"] = pd.to_datetime(df["close_time"], unit="ms")
-    return df[["close_time","open","high","low","close","volume"]]
+    headers = {
+        "User-Agent": "Mozilla/5.0"
+    }
+    resp = requests.get(url, params=params, headers=headers)
+    try:
+        data = resp.json()
+        df = pd.DataFrame(data, columns=[
+            "open_time","open","high","low","close","volume",
+            "close_time","quote_asset_volume","num_trades","taker_buy_base",
+            "taker_buy_quote","ignore"
+        ])
+        df[["open","high","low","close","volume"]] = df[["open","high","low","close","volume"]].astype(float)
+        df["close_time"] = pd.to_datetime(df["close_time"], unit="ms")
+        return df[["close_time","open","high","low","close","volume"]]
+    except Exception as e:
+        st.error(f"API 返回异常：{e}")
+        return pd.DataFrame()
+
 
 # 构造样本序列
 def build_sequences(data, seq_len):
